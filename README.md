@@ -6,8 +6,10 @@ The algorithm can be launched this way :
 The default parameters car be seen in the argParser in this file. 
 
 TD3 has achieved a mean performance of ~-146.4 on 900 episodes of Pendulum-v0 (actor_2.pkl).
+
 The policy obtained has a high variance, maybe it can be reduced by tuning TD3 parameters, like discount value, noise or batch size.
 To reproduce the results, run evaluate_actor.py on some actor obtained with TD3.
-Two actors have been added in this git : one making ~150 (actor_1.pkl), one making ~146 (actor_2.pkl), measured with the evaluate_actor.
+Two actors have been added in this git : one making ~ -150 (actor_1.pkl), one making ~ -146 (actor_2.pkl), measured with the evaluate_actor.
+
 Those are some actors obtained quickly on several short runs of TD3.
 Result seems not going better over the time passed a certain limit, it will maybe be studied in the future.
