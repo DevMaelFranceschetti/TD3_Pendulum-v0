@@ -194,6 +194,7 @@ if __name__ == "__main__":
     parser.add_argument('--period', default=5000, type=int)
     parser.add_argument('--max_steps', default=40000, type=int)#1000000
     parser.add_argument('--mem_size', default=100000, type=int)
+    parser.add_argument('--env_max_steps', default=-1, type=int)# -1 for env default value
     parser.add_argument('--nbRuns', default=50,type=int)
 
     # Testing parameters
@@ -207,6 +208,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug', dest='debug', action='store_true')
     parser.add_argument('--seed', default=-1, type=int)
     parser.add_argument('--render', dest='render', action='store_false')
+    parser.add_argument('--video_max_steps', default=1000, type=int)
 
     args = parser.parse_args()
     args.output = get_output_folder(args.output, args.env)
@@ -217,7 +219,8 @@ if __name__ == "__main__":
 
     # The environment
     env = gym.make(args.env)
-    env._max_episode_steps = 1000
+    if args.env_max_steps > 0 :
+        env._max_episode_steps = args.env_max_steps
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.shape[0]
     max_action = int(env.action_space.high[0])
@@ -241,14 +244,7 @@ if __name__ == "__main__":
     for run in range(0,1):#args.nbRuns):
         memory = Memory(args.mem_size, state_dim, action_dim)
         # agent
-        if args.use_td3:
-            print("RUNNING : TD3")
-            #TD3
-            agent = TD3(state_dim, action_dim, max_action, memory, args)
-        else:
-            print("RUNNING : DDPG")
-            #DDPG
-            agent = DDPG(state_dim, action_dim, max_action, memory, args)
+        agent = TD3(state_dim, action_dim, max_action, memory, args)
 
         if args.mode == 'train':
             train(run,n_episodes=args.n_episodes, output=args.output, debug=args.debug, render=False)#modif en brut
@@ -259,35 +255,25 @@ if __name__ == "__main__":
     env.close()
     """
     #########################################
-    ###### TEST DE L'AGENT sur Swimmer: #####
+    ###### TEST DE L'AGENT (vidéo) :    #####
     #########################################
-    #
-    # Note : on cherche ici à faire fonctionner le Swimmer en le branchant à l'actor qui a été entrainé.
-    # On commence par réinitialiser un environnement Swimmer totalement neutre, puis on appelle
-    # l'acteur pour choisir l'action à faire, et on visualise le résultat au fur-et-à-mesure avec render().
 
-    #création d'un environnement Swimmer
-    env2 = gym.make('Swimmer-v2')
+
+    #création d'un environnement
+    env = gym.make(args.env)
     #ajout d'un moniteur pour l'enregistrement vidéo sur l'environnement :
-    env2 = gym.wrappers.Monitor(env2, './video',force=True)
+    env = gym.wrappers.Monitor(env, './video',force=True)
     #itialisation de l'environnement :
-    env2.reset()
-    #chargement d'un état neutre (positions à 0, vélocités à 0) :
-    env2.set_state(env2.init_qpos, env2.init_qvel)
-    #définition d'une action nulle :
-    action = [0. , 0.]
-    #récupération de la valeur de l'état grâce à l'action nulle (petite triche) :
-    state, reward, done, _ = env2.step(action)
-
+    state = env.reset()
     #itérations sur les actions choisies par l'acteur entrainté :
-    for _ in range(10000):
+    for _ in range(args.video_max_steps):
         #choix de l'action par l'acteur entrainté :
         action = agent.select_action(state)
         #on effectue cette action et on récupère le nouvel état :
-        state, reward, done, _ = env2.step(action)
+        state, reward, done, _ = env.step(action)
         #on recommence un nouvel épisode si on a complété le précédent :
         if(done):
-            state = env2.reset()
+            state = env.reset()
     #fermeture de l'environnement :
-    env2.close()
+    env.close()
     """
