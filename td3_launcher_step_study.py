@@ -138,7 +138,6 @@ def train(run, n_episodes, output=None, debug=False, render=False):
                 #if args.save_all_models:
             #os.makedirs(output + "/td3_run_{}_{}_steps".format(str(1+run),total_steps),exist_ok=True)
             agent.actor.save_model("actors", "actor_td3_pendulum_"+str(run)+"_"+str(total_steps))
-            agent.actor.save_model_evaluator("actors/actor_eval_td3_pendulum_"+str(run)+"_"+str(total_steps), agent.actor_optimizer)#version pour l'evaluator de Sigaud
             step_cpt = 0
             print(res)
 
