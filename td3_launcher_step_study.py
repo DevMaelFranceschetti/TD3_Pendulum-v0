@@ -136,7 +136,7 @@ def train(run, n_episodes, output=None, debug=False, render=False):
             res = {"total_steps": total_steps, "score": f}
                 #if args.save_all_models:
             #os.makedirs(output + "/td3_run_{}_{}_steps".format(str(1+run),total_steps),exist_ok=True)
-            agent.actor.save_model("actors", "actor_td3_pendulum_"+str(run)+"_"+str(total_steps))
+            agent.actor.save_model("actors", "actor_td3_"+str(args.env)+"_"+str(run)+"_"+str(total_steps)+"_"+str(f))
             step_cpt = 0
             print(res)
 
