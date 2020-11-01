@@ -1,6 +1,3 @@
-    ###########################################################################################################################
-    ######   Ce code permet de sauvegarder la vidéo d'un run sur Swimmer d'un acteur chargé depuis un fichier pkl    ##########
-    ###########################################################################################################################
 
 from copy import deepcopy
 import argparse
@@ -15,7 +12,7 @@ import gym.spaces
 import numpy as np
 from tqdm import tqdm
 
-from models import RLNN
+from models import RLNN, Actor
 from random_process import GaussianNoise, OrnsteinUhlenbeckProcess
 from memory import Memory
 from util import *
@@ -29,66 +26,6 @@ if USE_CUDA:
     FloatTensor = torch.cuda.FloatTensor
 else:
     FloatTensor = torch.FloatTensor
-
-    #####################################################
-    ## Classe de l'acteur (pour pas avoir à importer): ##
-    #####################################################
-
-class Actor(RLNN):
-
-    def __init__(self, state_dim, action_dim, max_action, args):
-        super(Actor, self).__init__(state_dim, action_dim, max_action)
-
-        self.l1 = nn.Linear(state_dim, 400)
-        self.l2 = nn.Linear(400, 300)
-        self.l3 = nn.Linear(300, action_dim)
-
-        if args.layer_norm:
-            self.n1 = nn.LayerNorm(400)
-            self.n2 = nn.LayerNorm(300)
-        self.layer_norm = args.layer_norm
-
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=args.actor_lr)
-        self.tau = args.tau
-        self.discount = args.discount
-        self.state_dim = state_dim
-        self.action_dim = action_dim
-        self.max_action = max_action
-
-    def forward(self, x):
-
-        if not self.layer_norm:
-            x = torch.tanh(self.l1(x))
-            x = torch.tanh(self.l2(x))
-            x = self.max_action * torch.tanh(self.l3(x))
-
-        else:
-            x = torch.tanh(self.n1(self.l1(x)))
-            x = torch.tanh(self.n2(self.l2(x)))
-            x = self.max_action * torch.tanh(self.l3(x))
-
-        return x
-
-    def update(self, memory, batch_size, critic, actor_t):
-
-        # Sample replay buffer
-        states, _, _, _, _ = memory.sample(batch_size)
-
-        # Compute actor loss
-        if args.use_td3:
-            actor_loss = -critic(states, self(states))[0].mean()
-        else:
-            actor_loss = -critic(states, self(states)).mean()
-
-        # Optimize the actor
-        self.optimizer.zero_grad()
-        actor_loss.backward()
-        self.optimizer.step()
-
-        # Update the frozen target models
-        for param, target_param in zip(self.parameters(), actor_t.parameters()):
-            target_param.data.copy_(
-                self.tau * param.data + (1 - self.tau) * target_param.data)
 
 
 if __name__ == "__main__":
@@ -117,14 +54,6 @@ if __name__ == "__main__":
 
 
     args = parser.parse_args()
-
-    #########################################
-    ##### Vidéo de l'acteur sur Swimmer: ####
-    #########################################
-    #
-    # Note : on cherche ici à faire fonctionner le Swimmer en le branchant à l'actor qui a été entrainé.
-    # On commence par réinitialiser un environnement Swimmer totalement neutre, puis on appelle
-    # l'acteur pour choisir l'action à faire, et on sauvegarde le résultat en vidéo mp4.
     
     #paramètres :
     output_video_dir = './video_actor' # /!\ Nom du dossier où enregistrer la vidéo, si activé
