@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from ddpg import DDPG
 from td3 import TD3
 from models import RLNN
 from random_process import *
