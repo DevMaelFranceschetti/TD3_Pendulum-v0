@@ -86,25 +86,14 @@ class Actor(RLNN):
         self.l1 = nn.Linear(state_dim, 400)
         self.l2 = nn.Linear(400, 300)
         self.l3 = nn.Linear(300, action_dim)
-
-        if layer_norm:
-            self.n1 = nn.LayerNorm(400)
-            self.n2 = nn.LayerNorm(300)
-        self.layer_norm = layer_norm
+        self.layer_norm = layer_norm #not used yet
         self.optimizer = torch.optim.Adam(self.parameters(), lr=0.01)
 
     def forward(self, x):
         print("forward")
-        if not self.layer_norm:
-            x = torch.tanh(self.l1(x))
-            x = torch.tanh(self.l2(x))
-            x = self.max_action * torch.tanh(self.l3(x))
-
-        else:
-            x = torch.tanh(self.n1(self.l1(x)))
-            x = torch.tanh(self.n2(self.l2(x)))
-            x = self.max_action * torch.tanh(self.l3(x))
-
+        x = torch.tanh(self.l1(x))
+        x = torch.tanh(self.l2(x))
+        x = self.max_action * torch.tanh(self.l3(x))
         return x
 
 
@@ -115,70 +104,10 @@ class Critic(RLNN):
         self.l1 = nn.Linear(state_dim + action_dim, 400)
         self.l2 = nn.Linear(400, 300)
         self.l3 = nn.Linear(300, 1)
-
-        if layer_norm:
-            self.n1 = nn.LayerNorm(400)
-            self.n2 = nn.LayerNorm(300)
-        self.layer_norm = layer_norm
+        self.layer_norm = layer_norm #not used yet
 
     def forward(self, x, u):
-
-        if not self.layer_norm:
-            x = torch.nn.functional.relu(self.l1(torch.cat([x, u], 1)))#torch.leaky_relu
-            x = torch.nn.functional.relu(self.l2(x))
-            x = self.l3(x)
-
-        else:
-            x = torch.nn.functional.relu(self.n1(self.l1(torch.cat([x, u], 1))))
-            x = torch.nn.functional.relu(self.n2(self.l2(x)))
-            x = self.l3(x)
-
+        x = torch.nn.functional.relu(self.l1(torch.cat([x, u], 1)))#torch.leaky_relu
+        x = torch.nn.functional.relu(self.l2(x))
+        x = self.l3(x)
         return x
-
-
-class CriticTD3(RLNN):
-    def __init__(self, state_dim, action_dim, layer_norm=False):
-        super(CriticTD3, self).__init__(state_dim, action_dim, 1)
-
-        # Q1 architecture
-        self.l1 = nn.Linear(state_dim + action_dim, 400)
-        self.l2 = nn.Linear(400, 300)
-        self.l3 = nn.Linear(300, 1)
-
-        if layer_norm:
-            self.n1 = nn.LayerNorm(400)
-            self.n2 = nn.LayerNorm(300)
-
-        # Q2 architecture
-        self.l4 = nn.Linear(state_dim + action_dim, 400)
-        self.l5 = nn.Linear(400, 300)
-        self.l6 = nn.Linear(300, 1)
-
-        if layer_norm:
-            self.n4 = nn.LayerNorm(400)
-            self.n5 = nn.LayerNorm(300)
-        self.layer_norm = layer_norm
-
-    def forward(self, x, u):
-
-        if not self.layer_norm:
-            x1 = torch.nn.functional.relu(self.l1(torch.cat([x, u], 1)))
-            x1 = torch.nn.functional.relu(self.l2(x1))
-            x1 = self.l3(x1)
-
-        else:
-            x1 = torch.nn.functional.relu(self.n1(self.l1(torch.cat([x, u], 1))))
-            x1 = torch.nn.functional.relu(self.n2(self.l2(x1)))
-            x1 = self.l3(x1)
-
-        if not self.layer_norm:
-            x2 = torch.nn.functional.relu(self.l4(torch.cat([x, u], 1)))
-            x2 = torch.nn.functional.relu(self.l5(x2))
-            x2 = self.l6(x2)
-
-        else:
-            x2 = torch.nn.functional.relu(self.n4(self.l4(torch.cat([x, u], 1))))
-            x2 = torch.nn.functional.relu(self.n5(self.l5(x2)))
-            x2 = self.l6(x2)
-
-        return x1, x2
