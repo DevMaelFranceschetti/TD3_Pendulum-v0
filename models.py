@@ -78,14 +78,6 @@ class RLNN(nn.Module):
             '{}/{}.pkl'.format(output, net_name)
         )
 
-    def save_model_evaluator(self, filename, optimizer) -> None:
-        """
-        Save a neural network model into a file
-        :param filename: the filename, including the path
-        :return: nothing
-        """
-        torch.save(dict(model=self, model_state=self.state_dict(), optimizer=self.optimizer.state_dict()), filename)
-
 
 class Actor(RLNN):
 
