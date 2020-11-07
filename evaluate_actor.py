@@ -31,7 +31,7 @@ else:
 if __name__ == "__main__":
 
     ###########################################
-    ## Création des arguments pour l'acteur: ##
+    ##           Code Parameter:             ##
     ###########################################
 
     parser = argparse.ArgumentParser()
@@ -55,50 +55,49 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    #paramètres :
-    output_video_dir = './video_actor' # /!\ Nom du dossier où enregistrer la vidéo, si activé
-    actor_directory = args.policies_dir # /!\ dossier où se trouve l'acteur
-    actor_filename = args.file # /!\ nom du fichier de l'acteur (sans l'extension)
+    # parameters :
+    output_video_dir = './video_actor' # /!\ Directory for video output if used
+    actor_directory = args.policies_dir # /!\ Directory of the actor to load
+    actor_filename = args.file # /!\ actor's filename (without extension)
     reward = 0  
     rewards_list = []
     nb_runs = 900
 
     for run in range(nb_runs):
-        #création d'un environnement Swimmer :
+        # creating gym env :
         print("Creating environment")
         env = gym.make(args.env)
 
-        #ajout d'un moniteur pour l'enregistrement vidéo sur l'environnement :
+        #creating a monitor for video output if used :
         #env = gym.wrappers.Monitor(env, output_video_dir,force=True)
 
-        #itialisation de l'environnement :
+        # initialisation :
         state = env.reset()
         state_dim = env.observation_space.shape[0]
         action_dim = env.action_space.shape[0]
         max_action = int(env.action_space.high[0])
-        action = [0. , 0.]
         tot_reward = 0
 
         done = 0  
-        #chargement de l'acteur :
+        #actor load:
         print("Loading actor")
         actor = Actor(state_dim, action_dim, max_action, args)
         actor.load_model(actor_directory,actor_filename)
 
-        #itérations sur les actions choisies par l'acteur entrainté :
+        # executing the actor on an episode:
         print("Running...")
         while not done:
-            #conversion de l'état dans le bon format (FloatTensor) pour la méthode forward de Actor:
+            # converting state in tensor for the policy:
             stateTorch = FloatTensor(np.array(state).reshape(-1))
-            #choix de l'action par l'acteur entrainté :
+            # select action and convert it to a flatten numpy :
             action = actor.forward(stateTorch).cpu().data.numpy().flatten()
-            #on effectue cette action et on récupère le nouvel état :
+            # running the action:
             state, reward, done, _ = env.step(action)
             tot_reward+=reward
         rewards_list.append(tot_reward)
         print("total reward : "+str(tot_reward))
         #print("Video saved in : "+str(output_video_dir))
 
-        #fermeture de l'environnement:
+        # closing the env:
         env.close()
     print("mean reward : "+str(np.mean(rewards_list)))
