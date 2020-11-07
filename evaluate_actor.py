@@ -31,7 +31,7 @@ else:
 if __name__ == "__main__":
 
     ###########################################
-    ##           Code Parameter:             ##
+    ##           Code Parameters:            ##
     ###########################################
 
     parser = argparse.ArgumentParser()
